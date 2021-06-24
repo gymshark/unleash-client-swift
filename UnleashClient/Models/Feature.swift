@@ -7,26 +7,38 @@
 
 import Foundation
 
-class Feature: Codable {
-    var name: String
-    var description: String
-    var enabled: Bool
-    var strategies: [ActivationStrategy]
-    var variants: [VariantDefinition]?
-    var createdAt: String
+
+public enum TypeEnum: String, Codable {
+    case killSwitch = "kill-switch"
+    case operational = "operational"
+    case release = "release"
+}
+
+
+// MARK: - Feature
+public class Feature: Codable {
     
-    init(name: String,
-         description: String,
-         enabled: Bool,
-         strategies: [ActivationStrategy],
-         variants: [VariantDefinition]?,
-         createdAt: String) {
-        
+    public init(name: String, type: TypeEnum, enabled: Bool, stale: Bool, strategies: [ActivationStrategy]) {
         self.name = name
-        self.description = description
+        self.type = type
         self.enabled = enabled
+        self.stale = stale
         self.strategies = strategies
-        self.variants = variants
-        self.createdAt = createdAt
+    }
+    
+    let name: String
+    let type: TypeEnum
+    let enabled, stale: Bool
+    let strategies: [ActivationStrategy]
+}
+
+
+// MARK: - Parameters
+public class FeatureParameters: Codable {
+    let parametersStore, store: String?
+
+    enum CodingKeys: String, CodingKey {
+        case parametersStore = "store"
+        case store = "Store"
     }
 }
