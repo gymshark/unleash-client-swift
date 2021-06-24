@@ -17,9 +17,8 @@ import Quick
 class ToggleServiceSpec : QuickSpec {
     override func spec() {
         let appName: String = "test app"
-        let instanceId: String = "123"
         var service: ToggleService {
-            return ToggleService(appName: appName, instanceId: instanceId)
+            return ToggleService(appName: appName)
         }
         var urlRequest: URLRequest?
         
@@ -55,7 +54,6 @@ class ToggleServiceSpec : QuickSpec {
                 // Assert
                 if let result = urlRequest {
                     expect(hasHeaderNamed("UNLEASH-APPNAME", value: appName)(result)).to(beTrue())
-                    expect(hasHeaderNamed("UNLEASH-INSTANCEID", value: instanceId)(result)).to(beTrue())
                     expect(hasHeaderNamed("User-Agent", value: appName)(result)).to(beTrue())
                 } else {
                     fail()

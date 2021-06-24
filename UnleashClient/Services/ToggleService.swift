@@ -13,11 +13,9 @@ import PMKFoundation
 
 struct ToggleService: ToggleServiceProtocol {
     private let appName: String
-    private let instanceId: String
     
-    init(appName: String, instanceId: String) {
+    init(appName: String) {
         self.appName = appName
-        self.instanceId = instanceId
     }
 }
 
@@ -41,7 +39,6 @@ extension ToggleService {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         request.addValue(self.appName, forHTTPHeaderField: "UNLEASH-APPNAME")
-        request.addValue(self.instanceId, forHTTPHeaderField: "UNLEASH-INSTANCEID")
         request.addValue(self.appName, forHTTPHeaderField: "User-Agent")
         return request
     }

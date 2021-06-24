@@ -29,7 +29,6 @@ public protocol UnleashDelegate {
 public class Unleash {
   
   // MARK: - Properties
-  private var registerService: RegisterServiceProtocol
   private var toggleRepository: ToggleRepositoryProtocol
   private var toggles: Toggles? { return toggleRepository.toggles }
   private var scheduler: Scheduler
@@ -47,16 +46,13 @@ public class Unleash {
     refreshInterval: TimeInterval = 3600,
     strategies: [Strategy] = []
   ) {
-    let clientRegistration: ClientRegistration = ClientRegistration(appName: appName, strategies: strategies)
     let registerService: RegisterServiceProtocol = RegisterService()
     let memory: MemoryCache = MemoryCache(cache: Cache(), jsonDecoder: JSONDecoder(), jsonEncoder: JSONEncoder())
-    let toggleService: ToggleServiceProtocol = ToggleService(appName: appName, instanceId: clientRegistration.instanceId)
+    let toggleService: ToggleServiceProtocol = ToggleService(appName: appName)
     let toggleRepository: ToggleRepository = ToggleRepository(memory: memory, toggleService: toggleService)
     let allStrategies: [Strategy] = [DefaultStrategy()] + strategies
     
     self.init(
-      clientRegistration: clientRegistration,
-      registerService: registerService,
       toggleRepository: toggleRepository,
       appName: appName,
       url: url,
@@ -66,8 +62,6 @@ public class Unleash {
   
   // MARK: - Internal Init
   init(
-    clientRegistration: ClientRegistration,
-    registerService: RegisterServiceProtocol,
     toggleRepository: ToggleRepositoryProtocol,
     appName: String,
     url: String,
@@ -75,7 +69,6 @@ public class Unleash {
     strategies: [Strategy],
     scheduler: Scheduler? = nil
   ) {
-    self.registerService = registerService
     self.toggleRepository = toggleRepository
     self.appName = appName
     self.url = url
@@ -89,45 +82,15 @@ public class Unleash {
     }
     self.scheduler.delegate = self
     
-    start(client: clientRegistration)
+    start()
   }
   
   // MARK: Start
-  private func start(client: ClientRegistration) {
-    register(body: client)
-    .then { response -> Promise<Void> in
-      self.scheduler.do {
-        _ = self.fetchToggles().done { self.delegate?.unleashDidLoad(self) }
-      }
-      self.scheduler.resume()
-      return .value(())
+  private func start() {
+    self.scheduler.do {
+      _ = self.fetchToggles().done { self.delegate?.unleashDidLoad(self) }
     }
-    .catch { self.delegate?.unleashDidFail(self, withError: $0) }
-  }
-  
-  // MARK: Register
-  private func register(body: ClientRegistration, completion: @escaping (Error?) -> Void) {
-    guard
-      let url = URL(string: self.url)
-      else { return completion(UnleashError.noURLProvided) }
-    
-    _ = registerService.register(url: url, body: body)
-    .tap({ result in
-      switch result {
-      case .success(let response):
-         log("Unleash registered client \(body.instanceId) with response \(response ?? [:])")
-        completion(nil)
-      case .failure(let error):
-        completion(error)
-      }
-    })
-  }
-  
-  @discardableResult
-  private func register(body: ClientRegistration) -> Promise<Void> {
-    return Promise { resolver in
-      self.register(body: body) { error in resolver.resolve(error) }
-    }
+    self.scheduler.resume()
   }
   
   // MARK: Fetch Toggles
